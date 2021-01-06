@@ -31,16 +31,16 @@ Assume that both the dealer's cards are given face up (ie visible).
 */
 
 function CREATE_GAME() {
-    let game_created = {
+    let game = {
         'wins': 0,
         'losses': 0,
         'ties': 0,
         'player_turn': true,
         'bot_hand': [],
         'player_hand': [],
-        'game_status': true
+        'status': true
     }
-    return game_created;
+    return game;
 }
 
 function DECK_OF_CARDS() {
@@ -66,72 +66,99 @@ const shuffleArray = (array) => {
     }
 }
 
+function getHandTotal(hand) {
+    const handTotal = hand.reduce((a, b) => a + b, 0);
+    return handTotal;
+}
 
 function HIT(game, cards) {
     let index = 0;
     let card = cards.pop(index);
-    if (game['player_turn'] == true) {
-        game['player_hand'].push(card);
+    if (game.player_turn == true) {
+        game.player_hand.push(card);
         console.log('Players new card is ' + card);
-    } else if (game['player_turn'] == false) {
+        if(getHandTotal(game.player_hand)>21){
+            console.log('GAME OVER BOT WINS!');
+            game.losses += 1;
+        }
+    } else if (game.player_turn == false) {
         console.log('Bots new card is ' + card);
-        game['bot_hand'].push(card);
+        game.bot_hand.push(card);
+        if(getHandTotal(game.bot_hand)>21){
+            console.log('GAME OVER YOU WIN!')
+            game.wins += 1;
+        }
+        
     }
 
 }
 
 function START(game) {
     const cards = DECK_OF_CARDS();
+    shuffleArray(cards);
     HIT(game, cards);
     HIT(game, cards);
-    console.log('Your cards are: ', game['player_hand']);
-    game['player_turn'] = !game['player_turn'];
+    console.log('Your cards are: ', game.player_hand);
+    game.player_turn = !game.player_turn;
     HIT(game, cards);
     HIT(game, cards);
+    console.log('Bots cards are: ', game.bot_hand)
+    return cards;
 }
 
-function getHandTotal(hand) {
-    const handTotal = hand.reduce((a, b) => a + b, 0);
-    return handTotal;
-}
 
 function COMPARE_HANDS(game) {
-    if (player_1_score > player_2_score) {
-        wins += 1;
+    const player_score = getHandTotal(game.player_hand);
+    const bot_score = getHandTotal(game.bot_hand);
+    if (game.player_score > game.bot_score) {
+        game.wins += 1;
         return 'YOU WIN CONGRATS';
-    } else if (player_2_score > player_1_score) {
-        losses += 1;
+    } else if (game.player_score < game.bot_score) {
+        game.losses += 1;
         return 'SORRY YOU LOSE';
     } else {
-        ties += 1;
+        game.ties += 1;
         return 'ITS A TIE';
     }
 }
 
 
 function STAND(game) {
-    if (player_turn == true) {
-        player_turn = false;
-        return player_turn;
-    } else if (player_turn == false) {
-        COMPARE_HANDS();
+    if (game.player_turn === true) {
+        game.player_turn = !game.player_turn;
+        return game.player_turn;
+    } 
+    else if (game.player_turn == false) {
+        COMPARE_HANDS(game);
     }
 }
 
-function CHECK(choice) {
+function CHECK(choice,game,cards) {
+    choice = prompt('please choose "hit" or "stand."');
     if (choice === "hit") {
-        HIT();
+        HIT(game,cards);
+        choice = prompt('please choose "hit" or "stand."');
+        CHECK(choice,game,cards);
     } else if (choice === "stand") {
-        STAND();
+        STAND(game);
     } else {
         choice = prompt('Invalid option, please choose "hit" or "stand."');
+        CHECK(choice,game,cards);
     }
 }
 
-function STATUS() {
-    console.log('Wins: ' + wins);
-    console.log('losses: ' + losses);
-    console.log('ties: ' + ties);
+function BOT_CHECK(game,cards){
+        console.log('*Bots turn*');
+        while(getHandTotal(game.bot_hand)< 17){
+            HIT(game,cards);
+        }
+        STAND(game);
+    }
+
+function STATUS(game) {
+    console.log('Wins: ' + game.wins);
+    console.log('losses: ' + game.losses);
+    console.log('ties: ' + game.ties);
 }
 
 function checkForAce(card) {
@@ -145,43 +172,32 @@ function checkForAce(card) {
 
 
 function main() {
-    const game = CREATE_GAME()
-    while (game_status === true) {
+    const game = CREATE_GAME();
+    while (game.status === true) {
         document.write('Welcome to Blackjack!');
         document.write('1. Start game');
         document.write('2. Check your record');
         document.write('3. Quit');
-        let x = prompt('Choose an option:');
-        if (game_status === true) {
+        //let x = prompt('Choose an option:');
+        let x = 1;
+        if (game.status === true) {
             switch (x) {
                 case 1:
-                    START();
+                    //players turn
+                    let cards = START(game);
                     let choice = prompt('Choose if you want to "hit" or "stand."');
                     CHECK(choice);
-
-                    //players turn
-                    if (player_turn = 0) {
-                        if (checkForAce() == true) {
-                            if ((player_2_score >= 17) || (player_2_score <= 21)) {
-                                player_2_score += 10;
-                                STAND();
-                            }
-                        } else if ((checkForAce == false) && (player_2_score < 17)) {
-                            HIT();
-                        } else {
-                            HIT();
-                        }
-                    }
                     //bots turn
-
+                    if (game.player_turn === false) {
+                        BOT_CHECK(game,cards)
+                    }
                     break;
                 case 2:
-                    STATUS()
-                    return;
+                    STATUS(game);
                     break;
                 case 3:
                     console.log('Thanks for playing!');
-                    game_status = false;
+                    game.status = false;
                     break;
             }
         }
