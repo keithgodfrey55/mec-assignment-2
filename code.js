@@ -30,6 +30,7 @@ Assume there is no option to split, double down, or buy insurance.
 Assume that both the dealer's cards are given face up (ie visible).
 */
 
+
 function CREATE_GAME() {
     let game = {
         'wins': 0,
@@ -45,15 +46,15 @@ function CREATE_GAME() {
 
 function DECK_OF_CARDS() {
     let number = 1;
-    let array = [];
+    const array = [];
     for (let i = 0; i < 52; i++) {
         if (number === 14) {
             number = 1;
         }
         array.push(number);
-        number++;
+        number += 1;
     }
-
+    console.log('Array: ', array);
     return array;
 }
 
@@ -103,13 +104,12 @@ function START(game) {
     HIT(game, cards);
     HIT(game, cards);
     console.log('Bots cards are: ', game.bot_hand)
-    return cards;
 }
 
 
 function COMPARE_HANDS(game) {
-    const player_score = getHandTotal(game.player_hand);
-    const bot_score = getHandTotal(game.bot_hand);
+    game.player_score = getHandTotal(game.player_hand);
+    game.bot_score = getHandTotal(game.bot_hand);
     if (game.player_score > game.bot_score) {
         game.wins += 1;
         return 'YOU WIN CONGRATS';
@@ -133,16 +133,31 @@ function STAND(game) {
     }
 }
 
+function getPrompt(typeOfPrompt) {
+    let _prompt = null;
+    if (typeOfPrompt === 'option') {
+        _prompt = parseInt(prompt('Enter an option'));
+        return _prompt;
+    }
+    if (typeOfPrompt === 'choice') {
+        _prompt = prompt('Please choose to "hit" or "stand"');
+        return _prompt;
+    }
+    if (typeOfPrompt === 'invalid choice') {
+        _prompt = prompt('Invalid option, please choose "hit" or "stand."');
+        return _prompt;
+    }
+}
+
 function CHECK(choice,game,cards) {
-    choice = prompt('please choose "hit" or "stand."');
     if (choice === "hit") {
         HIT(game,cards);
-        choice = prompt('please choose "hit" or "stand."');
+        choice = getPrompt(typeOfPrompt='choice')
         CHECK(choice,game,cards);
     } else if (choice === "stand") {
         STAND(game);
     } else {
-        choice = prompt('Invalid option, please choose "hit" or "stand."');
+        choice = getPrompt(typeOfPrompt='invalid choice');
         CHECK(choice,game,cards);
     }
 }
@@ -169,39 +184,33 @@ function checkForAce(card) {
     }
 }
 
-
-
 function main() {
     const game = CREATE_GAME();
-    while (game.status === true) {
-        document.write('Welcome to Blackjack!');
-        document.write('1. Start game');
-        document.write('2. Check your record');
-        document.write('3. Quit');
-        //let x = prompt('Choose an option:');
-        let x = 1;
-        if (game.status === true) {
-            switch (x) {
-                case 1:
-                    //players turn
-                    let cards = START(game);
-                    let choice = prompt('Choose if you want to "hit" or "stand."');
-                    CHECK(choice);
-                    //bots turn
-                    if (game.player_turn === false) {
-                        BOT_CHECK(game,cards)
-                    }
-                    break;
-                case 2:
-                    STATUS(game);
-                    break;
-                case 3:
-                    console.log('Thanks for playing!');
-                    game.status = false;
-                    break;
+    console.log('Welcome to Blackjack!');
+    console.log('1. Start game');
+    console.log('2. Check your record');
+    console.log('3. Quit');
+    let x = getPrompt(typeOfPrompt='option');
+    switch (x) {
+        case 1:
+            //players turn
+            START(game);
+            let choice = getPrompt(typeOfPrompt='choice');
+            CHECK(choice);
+            //bots turn
+            if (game.player_turn === false) {
+                BOT_CHECK(game,cards)
             }
-        }
+            break;
+        case 2:
+            STATUS(game);
+            break;
+        case 3:
+            console.log('Thanks for playing!');
+            game.status = false;
+            break;
     }
 
 }
+
 main();
